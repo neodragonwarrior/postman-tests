@@ -1,0 +1,15 @@
+pm.test("Change Authorization header value", function () {
+    // Set non-privileged user's value for Authorization header
+    var newAuthValue = "low_priv_auth_value";
+    pm.request.headers.upsert({
+        key: "Authorization",
+        value:newAuthValue
+    });
+});
+pm.test("Fail if 2xx status code", function () {
+    // Check if the status code is in the 2xx range
+    if (pm.response.code >= 200 && pm.response.code < 300) {
+        // Fail the test
+        pm.expect(responseCode).to.be.within(200, 299, "The server accepted an invalid authorization value, indicating a potential vulnerability");
+    }
+});
