@@ -1,18 +1,20 @@
 pm.test("XSS Test in Request Parameters", function () {
-    var xssPayloads = [
-        "<script>alert('XSS')</script>",
-        "javascript:alert('XSS')",
-        "onerror=alert('XSS')",
-        "<img src=x onerror=alert('XSS')>"
-    ];
+    var xssPayloads = [        "<script>alert('XSS')</script>",        "javascript:alert('XSS')",        "onerror=alert('XSS')",        "<img src=x onerror=alert('XSS')>"    ];
 
     // Get all the parameters from request URL
-    var urlParams = pm.request.url.getUrlParams();
-    Object.keys(urlParams).forEach(function(param) {
+    var url = new URL(pm.request.url);
+    var urlParams = new URLSearchParams(url.search);
+    var params = {};
+    for(var p of urlParams){
+        params[p[0]] = p[1];
+    }
+    Object.keys(params).forEach(function(param) {
         xssPayloads.forEach(function(payload) {
-            urlParams[param] = payload;
+            params[param] = payload;
+            var newUrl = new URL(pm.request.url);
+            newUrl.search = new URLSearchParams(params).toString();
             pm.sendRequest({
-                url: pm.request.url.setUrlParams(urlParams),
+                url: newUrl.href,
                 method: pm.request.method,
                 headers: pm.request.headers,
                 body: pm.request.body
