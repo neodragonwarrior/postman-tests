@@ -1,0 +1,56 @@
+pm.test("XSS Test in Request Parameters", function () {
+    var xssPayloads = [
+        "<script>alert('XSS')</script>",
+        "javascript:alert('XSS')",
+        "onerror=alert('XSS')",
+        "<img src=x onerror=alert('XSS')>"
+    ];
+
+    // Get all the parameters from request URL
+    var urlParams = pm.request.url.getUrlParams();
+    Object.keys(urlParams).forEach(function(param) {
+        xssPayloads.forEach(function(payload) {
+            urlParams[param] = payload;
+            pm.sendRequest({
+                url: pm.request.url.setUrlParams(urlParams),
+                method: pm.request.method,
+                headers: pm.request.headers,
+                body: pm.request.body
+            }, function (err) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    pm.test("Check for XSS payload in response", function () {
+                        var response = pm.response.text();
+                        pm.expect(response).to.not.include(payload);
+                    });
+                }
+            });
+        });
+    });
+
+    // Get all the parameters from request body
+    var bodyParams = pm.request.body.getBodyParams();
+    if (bodyParams) {
+        Object.keys(bodyParams).forEach(function(param) {
+            xssPayloads.forEach(function(payload) {
+                bodyParams[param] = payload;
+                pm.sendRequest({
+                    url: pm.request.url,
+                    method: pm.request.method,
+                    headers: pm.request.headers,
+                    body: pm.request.body.setBodyParams(bodyParams)
+                }, function (err) {
+                    if (err) {
+                        console.log(err);
+                    } else {
+                        pm.test("Check for XSS payload in response", function () {
+                            var response = pm.response.text();
+                            pm.expect(response).to.not.include(payload);
+                        });
+                    }
+                });
+            });
+        });
+    }
+});
